@@ -8,7 +8,6 @@ import commentjson as json
 from . import shared
 from . import presets
 
-
 __all__ = [
     "my_api_key",
     "sensitive_id",
@@ -46,6 +45,7 @@ def load_config_to_environ(key_list):
     for key in key_list:
         if key in config:
             os.environ[key.upper()] = os.environ.get(key.upper(), config[key])
+
 
 hide_history_when_not_logged_in = config.get(
     "hide_history_when_not_logged_in", False)
@@ -100,7 +100,7 @@ if "available_models" in config:
     logging.info(f"已设置可用模型：{config['available_models']}")
 
 # 模型配置
-if "extra_models" in  config:
+if "extra_models" in config:
     presets.MODELS.extend(config["extra_models"])
     logging.info(f"已添加额外的模型：{config['extra_models']}")
 
@@ -143,9 +143,13 @@ os.environ["ERNIE_APIKEY"] = ernie_api_key
 ernie_secret_key = config.get("ernie_secret_key", "")
 os.environ["ERNIE_SECRETKEY"] = ernie_secret_key
 
-load_config_to_environ(["openai_api_type", "azure_openai_api_key", "azure_openai_api_base_url",
-                       "azure_openai_api_version", "azure_deployment_name", "azure_embedding_deployment_name", "azure_embedding_model_name"])
+os.environ['AZURE_DALL_OPENAI_API_BASE_URL'] = config.get("azure_dall_openai_api_base_url", "")
+os.environ['AZURE_DALL_OPENAI_API_KEY'] = config.get("azure_dall_openai_api_key", "")
+os.environ['AZURE_DALL_OPENAI_DEPLOY_NAME'] = config.get("azure_dall_openai_deployment_name", "")
 
+load_config_to_environ(["openai_api_type", "azure_openai_api_key", "azure_openai_api_base_url",
+                        "azure_openai_api_version", "azure_deployment_name", "azure_embedding_deployment_name",
+                        "azure_embedding_model_name"])
 
 usage_limit = os.environ.get("USAGE_LIMIT", config.get("usage_limit", 120))
 
@@ -186,7 +190,6 @@ def retrieve_openai_api(api_key=None):
         os.environ["OPENAI_API_KEY"] = api_key
         yield api_key
     os.environ["OPENAI_API_KEY"] = old_api_key
-
 
 
 # 处理代理：

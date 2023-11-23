@@ -15,14 +15,14 @@ from .base_model import BaseLLMModel, ModelType
 
 
 def get_model(
-    model_name,
-    lora_model_path=None,
-    access_key=None,
-    temperature=None,
-    top_p=None,
-    system_prompt=None,
-    user_name="",
-    original_model = None
+        model_name,
+        lora_model_path=None,
+        access_key=None,
+        temperature=None,
+        top_p=None,
+        system_prompt=None,
+        user_name="",
+        original_model=None
 ) -> BaseLLMModel:
     msg = i18n("模型设置为了：") + f" {model_name}"
     model_type = ModelType.get_type(model_name)
@@ -88,6 +88,9 @@ def get_model(
         elif model_type == ModelType.StableLM:
             from .StableLM import StableLM_Client
             model = StableLM_Client(model_name, user_name=user_name)
+        elif model_type == ModelType.DALLE:
+            from .DallE import DallE
+            model = DallE(model_name, user_name=user_name)
         elif model_type == ModelType.MOSS:
             from .MOSS import MOSS_Client
             model = MOSS_Client(model_name, user_name=user_name)
@@ -130,7 +133,7 @@ def get_model(
             model = Qwen_Client(model_name, user_name=user_name)
         elif model_type == ModelType.ERNIE:
             from .ERNIE import ERNIE_Client
-            model = ERNIE_Client(model_name, api_key=os.getenv("ERNIE_APIKEY"),secret_key=os.getenv("ERNIE_SECRETKEY"))
+            model = ERNIE_Client(model_name, api_key=os.getenv("ERNIE_APIKEY"), secret_key=os.getenv("ERNIE_SECRETKEY"))
         elif model_type == ModelType.Unknown:
             raise ValueError(f"未知模型: {model_name}")
         logging.info(msg)
@@ -145,7 +148,8 @@ def get_model(
     if dont_change_lora_selector:
         return model, msg, chatbot, gr.update(), access_key, presudo_key
     else:
-        return model, msg, chatbot, gr.Dropdown.update(choices=lora_choices, visible=lora_selector_visibility), access_key, presudo_key
+        return model, msg, chatbot, gr.Dropdown.update(choices=lora_choices,
+                                                       visible=lora_selector_visibility), access_key, presudo_key
 
 
 if __name__ == "__main__":

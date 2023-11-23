@@ -90,17 +90,17 @@ class ChuanhuCallbackHandler(BaseCallbackHandler):
         self.callback = callback
 
     def on_agent_action(
-        self, action: AgentAction, color: Optional[str] = None, **kwargs: Any
+            self, action: AgentAction, color: Optional[str] = None, **kwargs: Any
     ) -> Any:
         self.callback(get_action_description(action.log))
 
     def on_tool_end(
-        self,
-        output: str,
-        color: Optional[str] = None,
-        observation_prefix: Optional[str] = None,
-        llm_prefix: Optional[str] = None,
-        **kwargs: Any,
+            self,
+            output: str,
+            color: Optional[str] = None,
+            observation_prefix: Optional[str] = None,
+            llm_prefix: Optional[str] = None,
+            **kwargs: Any,
     ) -> None:
         """If not the final action, print out observation."""
         # if observation_prefix is not None:
@@ -115,7 +115,7 @@ class ChuanhuCallbackHandler(BaseCallbackHandler):
             logging.info(llm_prefix)
 
     def on_agent_finish(
-        self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
+            self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         # self.callback(f"{finish.log}\n\n")
         logging.info(finish.log)
@@ -124,7 +124,7 @@ class ChuanhuCallbackHandler(BaseCallbackHandler):
         """Run on new LLM token. Only available when streaming is enabled."""
         self.callback(token)
 
-    def on_chat_model_start(self, serialized: Dict[str, Any], messages: List[List[BaseMessage]],  **kwargs: Any) -> Any:
+    def on_chat_model_start(self, serialized: Dict[str, Any], messages: List[List[BaseMessage]], **kwargs: Any) -> Any:
         """Run when a chat model starts running."""
         pass
 
@@ -149,6 +149,7 @@ class ModelType(Enum):
     Qwen = 15
     OpenAIVision = 16
     ERNIE = 17
+    DALLE = 18
 
     @classmethod
     def get_type(cls, model_name: str):
@@ -171,6 +172,8 @@ class ModelType(Enum):
             model_type = ModelType.StableLM
         elif "moss" in model_name_lower:
             model_type = ModelType.MOSS
+        elif "dall-e" in model_name_lower:
+            model_type = ModelType.DALLE
         elif "yuanai" in model_name_lower:
             model_type = ModelType.YuanAI
         elif "minimax" in model_name_lower:
@@ -198,18 +201,18 @@ class ModelType(Enum):
 
 class BaseLLMModel:
     def __init__(
-        self,
-        model_name,
-        system_prompt=INITIAL_SYSTEM_PROMPT,
-        temperature=1.0,
-        top_p=1.0,
-        n_choices=1,
-        stop=None,
-        max_generation_token=None,
-        presence_penalty=0,
-        frequency_penalty=0,
-        logit_bias=None,
-        user="",
+            self,
+            model_name,
+            system_prompt=INITIAL_SYSTEM_PROMPT,
+            temperature=1.0,
+            top_p=1.0,
+            n_choices=1,
+            stop=None,
+            max_generation_token=None,
+            presence_penalty=0,
+            frequency_penalty=0,
+            logit_bias=None,
+            user="",
     ) -> None:
         self.history = []
         self.all_token_counts = []
@@ -326,7 +329,7 @@ class BaseLLMModel:
                 construct_assistant(ai_reply))
         else:
             self.all_token_counts[-1] = total_token_count - \
-                sum(self.all_token_counts)
+                                        sum(self.all_token_counts)
         status_text = self.token_message()
         return chatbot, status_text
 
@@ -356,12 +359,13 @@ class BaseLLMModel:
             chain = load_summarize_chain(
                 llm, chain_type="map_reduce", return_intermediate_steps=True, map_prompt=PROMPT, combine_prompt=PROMPT)
             summary = chain({"input_documents": list(index.docstore.__dict__[
-                            "_dict"].values())}, return_only_outputs=True)["output_text"]
+                                                         "_dict"].values())}, return_only_outputs=True)["output_text"]
             print(i18n("总结") + f": {summary}")
-            chatbot.append([i18n("上传了")+str(len(files))+"个文件", summary])
+            chatbot.append([i18n("上传了") + str(len(files)) + "个文件", summary])
         return chatbot, status
 
-    def prepare_inputs(self, real_inputs, use_websearch, files, reply_language, chatbot, load_from_cache_if_possible=True):
+    def prepare_inputs(self, real_inputs, use_websearch, files, reply_language, chatbot,
+                       load_from_cache_if_possible=True):
         display_append = []
         limited_context = False
         if type(real_inputs) == list:
@@ -374,7 +378,8 @@ class BaseLLMModel:
             limited_context = True
             msg = "加载索引中……"
             logging.info(msg)
-            index = construct_index(self.api_key, file_src=files, load_from_cache_if_possible=load_from_cache_if_possible)
+            index = construct_index(self.api_key, file_src=files,
+                                    load_from_cache_if_possible=load_from_cache_if_possible)
             assert index is not None, "获取索引失败"
             msg = "索引获取成功，生成回答中……"
             logging.info(msg)
@@ -386,7 +391,8 @@ class BaseLLMModel:
                     relevant_documents = retriever.get_relevant_documents(
                         fake_inputs)
                 except AssertionError:
-                    return self.prepare_inputs(fake_inputs, use_websearch, files, reply_language, chatbot, load_from_cache_if_possible=False)
+                    return self.prepare_inputs(fake_inputs, use_websearch, files, reply_language, chatbot,
+                                               load_from_cache_if_possible=False)
             reference_results = [[d.page_content.strip("�"), os.path.basename(
                 d.metadata["source"])] for d in relevant_documents]
             reference_results = add_source_numbers(reference_results)
@@ -419,12 +425,12 @@ class BaseLLMModel:
                 reference_results.append([result['body'], result['href']])
                 display_append.append(
                     # f"{idx+1}. [{domain_name}]({result['href']})\n"
-                    f"<a href=\"{result['href']}\" target=\"_blank\">{idx+1}.&nbsp;{result['title']}</a>"
+                    f"<a href=\"{result['href']}\" target=\"_blank\">{idx + 1}.&nbsp;{result['title']}</a>"
                 )
             reference_results = add_source_numbers(reference_results)
             # display_append = "<ol>\n\n" + "".join(display_append) + "</ol>"
             display_append = '<div class = "source-a">' + \
-                "".join(display_append) + '</div>'
+                             "".join(display_append) + '</div>'
             if type(real_inputs) == list:
                 real_inputs[0]["text"] = (
                     replace_today(WEBSEARCH_PTOMPT_TEMPLATE)
@@ -444,21 +450,22 @@ class BaseLLMModel:
         return limited_context, fake_inputs, display_append, real_inputs, chatbot
 
     def predict(
-        self,
-        inputs,
-        chatbot,
-        stream=False,
-        use_websearch=False,
-        files=None,
-        reply_language="中文",
-        should_check_token_count=True,
+            self,
+            inputs,
+            chatbot,
+            stream=False,
+            use_websearch=False,
+            files=None,
+            reply_language="中文",
+            should_check_token_count=True,
     ):  # repetition_penalty, top_k
 
         status_text = "开始生成回答……"
         if type(inputs) == list:
-                logging.info(
+            logging.info(
                 "用户" + f"{self.user_identifier}" + "的输入为：" +
-                colorama.Fore.BLUE + "(" + str(len(inputs)-1) + " images) " + f"{inputs[0]['text']}" + colorama.Style.RESET_ALL
+                colorama.Fore.BLUE + "(" + str(
+                    len(inputs) - 1) + " images) " + f"{inputs[0]['text']}" + colorama.Style.RESET_ALL
             )
         else:
             logging.info(
@@ -467,20 +474,21 @@ class BaseLLMModel:
             )
         if should_check_token_count:
             if type(inputs) == list:
-                 yield chatbot + [(inputs[0]['text'], "")], status_text
+                yield chatbot + [(inputs[0]['text'], "")], status_text
             else:
                 yield chatbot + [(inputs, "")], status_text
         if reply_language == "跟随问题语言（不稳定）":
             reply_language = "the same language as the question, such as English, 中文, 日本語, Español, Français, or Deutsch."
 
         limited_context, fake_inputs, display_append, inputs, chatbot = self.prepare_inputs(
-            real_inputs=inputs, use_websearch=use_websearch, files=files, reply_language=reply_language, chatbot=chatbot)
+            real_inputs=inputs, use_websearch=use_websearch, files=files, reply_language=reply_language,
+            chatbot=chatbot)
         yield chatbot + [(fake_inputs, "")], status_text
 
         if (
-            self.need_api_key and
-            self.api_key is None
-            and not shared.state.multi_api_key
+                self.need_api_key and
+                self.api_key is None
+                and not shared.state.multi_api_key
         ):
             status_text = STANDARD_ERROR_MSG + NO_APIKEY_MSG
             logging.info(status_text)
@@ -551,9 +559,9 @@ class BaseLLMModel:
         if sum(self.all_token_counts) > max_token and should_check_token_count:
             count = 0
             while (
-                sum(self.all_token_counts)
-                > self.token_upper_limit * REDUCE_TOKEN_FACTOR
-                and sum(self.all_token_counts) > 0
+                    sum(self.all_token_counts)
+                    > self.token_upper_limit * REDUCE_TOKEN_FACTOR
+                    and sum(self.all_token_counts) > 0
             ):
                 count += 1
                 del self.all_token_counts[0]
@@ -565,12 +573,12 @@ class BaseLLMModel:
         self.auto_save(chatbot)
 
     def retry(
-        self,
-        chatbot,
-        stream=False,
-        use_websearch=False,
-        files=None,
-        reply_language="中文",
+            self,
+            chatbot,
+            stream=False,
+            use_websearch=False,
+            files=None,
+            reply_language="中文",
     ):
         logging.debug("重试中……")
         if len(self.history) > 1:
@@ -794,7 +802,7 @@ class BaseLLMModel:
                     logging.info(new_history)
             except:
                 pass
-            if len(json_s["chatbot"]) < len(json_s["history"])//2:
+            if len(json_s["chatbot"]) < len(json_s["history"]) // 2:
                 logging.info("Trimming corrupted history...")
                 json_s["history"] = json_s["history"][-len(json_s["chatbot"]):]
                 logging.info(f"Trimmed history: {json_s['history']}")
@@ -824,7 +832,7 @@ class BaseLLMModel:
             return i18n("删除对话历史成功"), get_history_list(user_name), []
         except:
             logging.info(f"删除对话历史失败 {history_file_path}")
-            return i18n("对话历史")+filename+i18n("已经被删除啦"), get_history_list(user_name), []
+            return i18n("对话历史") + filename + i18n("已经被删除啦"), get_history_list(user_name), []
 
     def auto_load(self):
         filepath = get_history_filepath(self.user_identifier)
@@ -884,6 +892,7 @@ class Base_Chat_Langchain_Client(BaseLLMModel):
             self.model(messages=history, callbacks=[
                 ChuanhuCallbackHandler(it.callback)])
             it.finish()
+
         t = Thread(target=thread_func)
         t.start()
         partial_text = ""
