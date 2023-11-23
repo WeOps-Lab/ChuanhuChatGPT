@@ -87,8 +87,10 @@ class DallE(BaseLLMModel):
             "quality": self.image_quality,
             "style": self.image_style
         }
+
         submission = requests.post(url, headers=headers, json=body)
-
-        image_url = submission.json()["data"][0]["url"]
-
-        return f'![{question}]({image_url})', 1
+        if submission.status_code == 200:
+            image_url = submission.json()["data"][0]["url"]
+            return f'![{question}]({image_url})', 1
+        else:
+            return f'![{submission.content}]', 1
